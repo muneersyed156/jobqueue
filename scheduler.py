@@ -30,6 +30,8 @@ def get_task_status(taskId):
         if( task_name in keys):
             data=json.loads(r.get(task_name))
             return(json.dumps(data))
+        else:
+            return
 
 if __name__=="__main__":
     app.run(debug=True,port=8081,threaded=True)
