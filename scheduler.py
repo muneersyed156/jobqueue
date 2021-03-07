@@ -4,12 +4,16 @@ import json
 import redis
 from celery.result import AsyncResult
 import task
+import pymongo
 app=Flask(__name__)
 
 redis_host = "localhost"
 redis_port = 6379
 redis_password = ""
 r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
+
+obj=pymongo.MongoClient()
+db=obj.scheduler
 
 @app.route("/insert",methods=["POST"])
 def tasks():
@@ -18,8 +22,11 @@ def tasks():
         return("Success")
     if(request.form):
         data=request.form
-        # print(data["url"],data["time"])
-        task_id=task.executing_task.delay(data["url"],data["time"])
+        k=db.scheduler.count()
+        print("Entered calling async")
+        task_id=task.executing_task.delay(data["url"],k+1,data["time"])
+        print("Exiting calling async")
+        db.scheduler.insert_one({"id":k+1,"url":data["url"],"waittime":data["time"],'scheduled_id':task_id.id,'status':'SCHEDULED'})
         return(task_id.id)
         
 @app.route("/<taskId>",methods=["GET"])
